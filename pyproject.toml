@@ -1,0 +1,33 @@
+[project]
+name = "chatbot"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Chris Bouda", email = "christopherbouda936@gmail.com" }
+]
+requires-python = ">=3.13"
+dependencies = [
+    "fastembed>=0.8.0",
+    "langchain>=1.4.2",
+    "langchain-anthropic>=1.7.2",
+    "langchain-chroma>=1.1.0",
+    "langchain-core>=1.6.4",
+    "langchain-text-splitters>=1.1.2",
+    "pydantic>=2.13.5",
+    "pydantic-settings>=2.15.0",
+    "sqlalchemy>=2.0.54",
+]
+
+[project.scripts]
+chatbot = "chatbot:main"
+
+[build-system]
+requires = ["uv_build>=0.10.12,<0.11.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.1.1",
+    "ruff>=0.16.8",
+]
