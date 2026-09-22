@@ -73,6 +73,14 @@ def parse_reply(text: str) -> RagAnswer:
 Retrieve = Callable[[str], list[SourceChunk]]
 
 
+def validate_user_message(text: str) -> str:
+    text = text.strip()
+    max_chars = get_settings().max_user_message_chars
+    if not text or len(text) > max_chars:
+        raise ValueError(f"message must be 1-{max_chars} characters")
+    return text
+
+
 def format_context(chunks: list[SourceChunk]) -> str:
     return "\n\n".join(f'<passage id="{c.ref}" updated="{c.updated}">\n{c.content}\n</passage>' for c in chunks)
 
@@ -92,11 +100,7 @@ def answer_question(
     retrieve: Retrieve = retrieve_chunks,
     generate: Runnable[dict[str, str], AIMessage] | None = None,
 ) -> ChatAnswer:
-    question = question.strip()
-    max_chars = get_settings().max_user_message_chars
-    if not question or len(question) > max_chars:
-        raise ValueError(f"question must be 1-{max_chars} characters")
-
+    question = validate_user_message(question)
     chunks = retrieve(question)
     if not chunks:
         return ChatAnswer(answer=NO_CONTEXT_ANSWER)  # nothing relevant: don't spend an LLM call to guess

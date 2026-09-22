@@ -3,7 +3,7 @@ from contextlib import contextmanager
 from functools import lru_cache
 from pathlib import Path
 
-from sqlalchemy import Engine, create_engine, event, make_url
+from sqlalchemy import Engine, StaticPool, create_engine, event, make_url
 from sqlalchemy.orm import Session, sessionmaker
 
 from chatbot.config import get_settings
@@ -12,11 +12,19 @@ from chatbot.config import get_settings
 def make_engine(url: str) -> Engine:
     parsed = make_url(url)
     is_sqlite = parsed.get_backend_name() == "sqlite"
+    in_memory = is_sqlite and parsed.database in (None, "", ":memory:")
+    kwargs: dict = {}
 
-    if is_sqlite and parsed.database not in (None, "", ":memory:"):
+    if is_sqlite:
+        # Agent tools run in worker threads. Sessions are still used by one thread at a time (see
+        # AgentContext.lock), but sqlite3 refuses cross-thread use of a connection by default.
+        kwargs["connect_args"] = {"check_same_thread": False}
+    if in_memory:
+        kwargs["poolclass"] = StaticPool  # one shared connection, or each thread would get its own empty DB
+    elif is_sqlite:
         Path(parsed.database).parent.mkdir(parents=True, exist_ok=True)
 
-    engine = create_engine(url)
+    engine = create_engine(url, **kwargs)
 
     if is_sqlite:
         # SQLite ignores foreign keys (and ON DELETE CASCADE) unless enabled per connection.
