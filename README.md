@@ -21,3 +21,10 @@ docs/                  system plan
 src/chatbot/           application code
 storage/               generated: app.db, chroma/, models/ (gitignored)
 ```
+
+## Run
+
+```bash
+uv run python -m chatbot.db.seed   # validate seed JSON, reset + load storage/app.db
+uv run pytest
+```

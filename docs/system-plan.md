@@ -58,7 +58,7 @@ We don't use `langchain-community` because it's being sunset. The fastembed → 
 | # | Module | Input | Output | Key rule |
 |---|---|---|---|---|
 | 1 | `config.py` | env / `.env` | `Settings` | The only place paths, model names, and knobs live |
-| 2 | `db/` models, session, seed | `data/seed/*.json` | populated SQLite | Seed is idempotent (drop + recreate) |
+| 2 | `db/` models, session, seed | `data/seed/*.json` | populated SQLite | Seed validates everything first, then resets the whole DB (drop + recreate) |
 | 3 | `rag/embeddings.py`, `rag/ingest.py` | `data/knowledge_base/*.md` | Chroma collection | Deterministic chunk IDs, so re-ingest never duplicates |
 | 4 | `rag/retriever.py`, `chains/rag.py` | question | `ChatAnswer` with sources | No retrieved context means "I don't know", never a guess |
 | 5 | `tools/` + `agent.py` | question + history | tool calls, then `ChatAnswer` | Order data only after number + email match |
@@ -96,12 +96,18 @@ class ChatAnswer(BaseModel):      # final structured reply
 | Table | Columns (abridged) | Notes |
 |---|---|---|
 | `customers` | id (`CUST-1001`), first_name, last_name, email (unique), phone, city, region, country, has_account, created_at | `has_account=false` means a guest |
-| `products` | sku (PK), name, brand, category, price `Numeric(10,2)`, final_sale | Current catalog price |
+| `products` | sku (PK), name, brand, category, price, final_sale | Current catalog price |
 | `orders` | order_number (PK, `NG-10421`), customer_id (FK), status (enum), shipping_method, shipping_cost, carrier, tracking_number, placed_at, shipped_at, delivered_at, cancelled_at, refunded_at, estimated_delivery, rma_number | Timestamps are set by status |
 | `order_items` | id, order_number (FK), sku (FK), quantity, unit_price | `unit_price` is a **snapshot at purchase time**, never the current catalog price |
 | `conversations` | id (uuid), started_at, last_active_at | Deleted after 90 days (see privacy policy) |
 | `messages` | id, conversation_id (FK, cascade), role (`user`/`assistant`), content, created_at | Cascade-deleted with their conversation |
 | `tickets` | id (`TCK-…`), conversation_id (FK), reason (enum), summary, order_number (nullable), status (`open`/`closed`), created_at | The hand-off record |
+
+**Money** is `Decimal` in Python and **integer cents** in the DB (the `Money` column type). SQLite has no exact decimal type, so `Numeric` would round-trip through float.
+
+**Datetimes** are timezone-aware UTC in Python and naive UTC in SQLite (the `UTCDateTime` column type). Naive datetimes are rejected on write.
+
+**Foreign keys** are switched on per connection (`PRAGMA foreign_keys=ON`), because SQLite ignores them by default, `ON DELETE CASCADE` included.
 
 **Order total** is derived as `sum(quantity × unit_price) + shipping_cost`. It's never stored, so it can't drift.
 
@@ -163,7 +169,7 @@ These must be unreachable: `shipped → cancelled`, `processing → delivered`, 
 ## 9. Build steps
 
 1. ✅ Scaffold: uv project, deps, config, synthetic data, this plan
-2. DB layer: SQLAlchemy models, session factory, seed script with Pydantic validation
+2. ✅ DB layer: SQLAlchemy models, session factory, seed script with Pydantic validation
 3. Ingestion: fastembed adapter, markdown header splitting, idempotent upsert into Chroma
 4. RAG chain: retriever, grounded prompt, `ChatAnthropic`, `ChatAnswer`
 5. Agent + tools: `search_help_center`, `lookup_order`, `escalate_to_human`
