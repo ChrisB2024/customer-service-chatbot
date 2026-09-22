@@ -29,6 +29,8 @@ uv run python -m chatbot.db.seed   # validate seed JSON, reset + load storage/ap
 uv run python -m chatbot.rag.ingest  # chunk + embed help-center docs into storage/chroma (idempotent)
 uv run python -m chatbot.chains.rag "Is there a restocking fee?"  # one grounded answer (needs ANTHROPIC_API_KEY)
 uv run python -m chatbot.agent "Where is NG-10415? daniel.reyes@example.com"  # agent with tools (one turn)
+uv run chatbot                     # interactive chat (/new, /help, /quit)
+uv run chatbot --resume <id>       # continue a saved conversation
 uv run pytest           # offline tests (fake LLM)
 uv run pytest -m live   # calls the Anthropic API
 ```

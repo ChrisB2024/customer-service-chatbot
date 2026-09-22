@@ -121,6 +121,11 @@ class ChatService:
         convo.failed_lookups += ctx.failed_lookups
         return Reply(convo.id, answer)
 
+    def recent_messages(self, conversation_id: str, turns: int = 2) -> list[tuple[MessageRole, str]]:
+        """The last few exchanges of a saved conversation (empty if it doesn't exist or expired)."""
+        with self._sessions() as session:
+            return [(m.role, m.content) for m in load_recent_messages(session, conversation_id, turns)]
+
     def purge_expired(self) -> int:
         with self._sessions.begin() as session:
             return delete_expired_conversations(session, self._clock(), self._settings.conversation_retention_days)

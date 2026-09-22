@@ -55,6 +55,7 @@ class Settings(BaseSettings):
     history_turns: int = 10  # past user/assistant pairs sent with each turn
     max_user_message_chars: int = 2000
     conversation_retention_days: int = 90  # promised in account_and_privacy.md
+    log_file: Path = STORAGE_DIR / "logs" / "chatbot.log"
 
 
 @lru_cache

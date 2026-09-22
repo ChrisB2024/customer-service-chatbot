@@ -16,7 +16,12 @@ class FastEmbedEmbeddings(Embeddings):
 
     def __init__(self, model_name: str, cache_dir: Path | None = None) -> None:
         self.model_name = model_name
-        self._model = TextEmbedding(model_name=model_name, cache_dir=str(cache_dir) if cache_dir else None)
+        cache = str(cache_dir) if cache_dir else None
+        try:
+            # Cache first: without this, fastembed calls the Hugging Face API on every startup, even when cached.
+            self._model = TextEmbedding(model_name=model_name, cache_dir=cache, local_files_only=True)
+        except ValueError:  # not downloaded yet (first run)
+            self._model = TextEmbedding(model_name=model_name, cache_dir=cache)
 
     def embed_documents(self, texts: list[str]) -> list[list[float]]:
         return [vector.tolist() for vector in self._model.passage_embed(texts)]
