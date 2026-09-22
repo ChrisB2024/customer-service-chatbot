@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
+from typing import Literal
 
 from pydantic import SecretStr
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -20,6 +21,12 @@ class Settings(BaseSettings):
     anthropic_api_key: SecretStr | None = None
     llm_model: str = "claude-opus-5"
     llm_max_tokens: int = 16000
+    llm_timeout_s: float = 60.0
+    # Support chat rarely needs deep reasoning; the step 8 eval decides whether to change this.
+    # Set to None for models without effort support (e.g. claude-haiku-4-5).
+    llm_effort: Literal["low", "medium", "high", "xhigh", "max"] | None = "medium"
+    # Server-side refusal fallbacks (Opus 5 / Fable only). Set False for other models.
+    llm_fallbacks: bool = True
 
     # Embeddings (local, via fastembed)
     embedding_model: str = "BAAI/bge-small-en-v1.5"
@@ -28,7 +35,11 @@ class Settings(BaseSettings):
     # Vector store
     chroma_dir: Path = STORAGE_DIR / "chroma"
     chroma_collection: str = "help_center"
-    retrieval_k: int = 4
+    # 6, not 4: "price match" ranks "Price adjustments" 5th (bge-small bunches scores at 0.58-0.63 there).
+    retrieval_k: int = 6
+    # Cosine relevance floor. Off-topic questions score ~0.44-0.60 and real ones ~0.61-0.85 on this KB,
+    # so this only drops obvious junk; the LLM judges the overlap zone.
+    min_relevance: float = 0.5
     chunk_size: int = 800
     chunk_overlap: int = 100
 

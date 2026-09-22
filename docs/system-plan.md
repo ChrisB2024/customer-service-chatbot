@@ -17,7 +17,7 @@
 | Concern | Choice | Why |
 |---|---|---|
 | Language | Python 3.13 (uv) | — |
-| LLM | Claude via `langchain-anthropic` (`claude-opus-5`, set with `LLM_MODEL`) | Strong tool use and structured output |
+| LLM | Claude via `langchain-anthropic` (`claude-opus-5`, set with `LLM_MODEL`), effort `medium`, server-side refusal fallbacks (`fallbacks: "default"`) | Strong tool use and grounding |
 | Orchestration | LangChain 1.x (`create_agent`, runnables) | Required by the project |
 | Embeddings | `fastembed` (`BAAI/bge-small-en-v1.5`, 384-dim, ONNX, runs locally) | No API key, no torch, CPU-fast |
 | Vector DB | Chroma (embedded, persisted to `storage/chroma/`) | Zero infra: it's to vector DBs what SQLite is to Postgres |
@@ -84,6 +84,10 @@ class OrderView(BaseModel):       # what lookup_order returns to the LLM (no PII
     estimated_delivery: date | None; carrier: str | None; tracking_number: str | None
     rma_number: str | None; shipping_method: str; items: list[OrderItemView]; total: Decimal
 
+class RagAnswer(BaseModel):       # parsed from the LLM's plain-text reply + <source> tags
+    answer: str
+    sources: list[str]            # filtered to ids that were actually retrieved
+
 class ChatAnswer(BaseModel):      # final structured reply
     answer: str
     sources: list[str]            # "file.md#Section"
@@ -129,7 +133,7 @@ These must be unreachable: `shipped → cancelled`, `processing → delivered`, 
 3. Every tool returns a Pydantic model or a typed error. Tools never raise raw exceptions into the agent loop.
 
 **Product**
-4. Policy answers are grounded in retrieved chunks and list their sources. If retrieval returns nothing relevant, the bot says it doesn't know and offers a human.
+4. Policy answers are grounded in retrieved chunks and list their sources. If nothing clears the relevance floor (`min_relevance=0.5`), the LLM isn't called at all and the bot says it doesn't know and offers a human. Cited sources are filtered to chunks that were actually retrieved, so a hallucinated citation never reaches the user.
 5. The user can always reach a human: "talk to a person" creates a ticket, whatever state the conversation is in.
 6. The bot never promises what it can't do (refunds, exceptions, order changes). It hands those off.
 
@@ -171,7 +175,7 @@ These must be unreachable: `shipped → cancelled`, `processing → delivered`, 
 1. ✅ Scaffold: uv project, deps, config, synthetic data, this plan
 2. ✅ DB layer: SQLAlchemy models, session factory, seed script with Pydantic validation
 3. ✅ Ingestion: fastembed adapter, markdown header splitting, idempotent upsert into Chroma
-4. RAG chain: retriever, grounded prompt, `ChatAnthropic`, `ChatAnswer`
+4. ✅ RAG chain: retriever, grounded prompt, `ChatAnthropic`, `ChatAnswer`
 5. Agent + tools: `search_help_center`, `lookup_order`, `escalate_to_human`
 6. Conversation memory: persist and reload history per session
 7. CLI chat loop
@@ -192,7 +196,9 @@ These must be unreachable: `shipped → cancelled`, `processing → delivered`, 
 ## 11. Open questions
 
 - Model cost: `claude-opus-5` is the default. Switch `LLM_MODEL` to `claude-haiku-4-5` if cost matters more than quality for this demo.
-- Should the CLI stream tokens, or print the full `ChatAnswer`? (Structured output favors printing the full answer.)
+- Should the CLI stream tokens, or print the full `ChatAnswer`? Replies are plain text now, so streaming is possible; sources come at the end.
 - Chunking: header-based splitting (H1/H2), with size-based splitting as a fallback for long sections. Each chunk is prefixed with `Title > Section`. The current KB gives 48 chunks (144–757 chars), with no section long enough to need the size fallback.
   - **Retrieval baseline (step 3, k=4):** the right file ranks first for 14/15 golden questions and appears in the top 4 for 15/15. Near-miss sections ranked first: AuraCharge warranty → *Third-party brands*, price match → *Returns > Exchanges*. The step 8 eval should score at the section level, not just the file.
+  - **Step 4 (k=6, live):** all 14 policy questions cite the right file and include every expected fact. Latency is 1.7–4.5 s per answer. Raising k from 4 to 6 fixed price match. "Can I pick up in store?" still misses *Contact & Support > About Nimbus Gear*, a vocabulary mismatch. The real fix is hybrid search (BM25 + vectors) or query rewriting.
 - A FastAPI endpoint after the CLI works?
+- **Structured output vs. plain text:** step 4 first used `with_structured_output(method="json_schema")`. In about half of the runs where the answer contained an em dash, the model double-escaped it inside the JSON string: a literal `\\u2014`, or garbage like `\\nin`. Replies are now plain text with `<source>` tags, parsed into `RagAnswer`. Keep JSON structured output for short machine fields, not customer-facing prose.
