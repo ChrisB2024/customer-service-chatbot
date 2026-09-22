@@ -59,3 +59,4 @@ class ChatAnswer(BaseModel):
     sources: list[str] = Field(default_factory=list)  # "file.md#Section"
     escalated: bool = False
     ticket_id: str | None = None
+    error: str | None = None  # set when the turn failed and nothing was saved

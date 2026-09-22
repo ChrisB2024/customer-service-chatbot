@@ -215,6 +215,7 @@ class Conversation(Base):
     id: Mapped[str] = mapped_column(String(36), primary_key=True, default=lambda: str(uuid4()))
     started_at: Mapped[datetime] = mapped_column(default=_now)
     last_active_at: Mapped[datetime] = mapped_column(default=_now)
+    failed_lookups: Mapped[int] = mapped_column(default=0)  # enumeration guard across turns
 
     messages: Mapped[list["Message"]] = relationship(
         back_populates="conversation",

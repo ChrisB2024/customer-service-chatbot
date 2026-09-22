@@ -1,11 +1,9 @@
 import json
 from datetime import UTC, datetime
-from itertools import count
 
 import pytest
-from langchain_core.language_models.fake_chat_models import GenericFakeChatModel
-from langchain_core.messages import AIMessage, HumanMessage, ToolMessage
-from pydantic import Field
+from fakes import call, scripted, tool_results
+from langchain_core.messages import AIMessage, HumanMessage
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
@@ -21,33 +19,6 @@ from chatbot.tools import BAD_ORDER_NUMBER, LOOKUP_LIMIT_REACHED, MAX_LOOKUPS_PE
 
 NOW = datetime(2026, 9, 21, 12, 0, tzinfo=UTC)
 CANADA = SourceChunk(source="shipping.md", section="Canada shipping", content="$14.99, 7-12 days.", score=0.8)
-_ids = count()
-
-
-class ScriptedModel(GenericFakeChatModel):
-    """Replays scripted AIMessages and records what the agent sent on each call."""
-
-    seen: list[list] = Field(default_factory=list)
-
-    def bind_tools(self, tools, **kwargs):
-        return self
-
-    def _generate(self, messages, *args, **kwargs):
-        self.seen.append(list(messages))
-        return super()._generate(messages, *args, **kwargs)
-
-
-def call(name: str, **args) -> dict:
-    return {"name": name, "args": args, "id": f"call_{next(_ids)}"}
-
-
-def scripted(*turns: AIMessage) -> ScriptedModel:
-    return ScriptedModel(messages=iter(turns))
-
-
-def tool_results(model: ScriptedModel) -> list[ToolMessage]:
-    """Tool results the model saw on its last call."""
-    return [m for m in model.seen[-1] if isinstance(m, ToolMessage)]
 
 
 @pytest.fixture

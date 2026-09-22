@@ -67,20 +67,18 @@ def get_agent() -> CompiledStateGraph:
     return build_agent(get_chat_model())
 
 
-def run_agent(
+def run_turn(
     message: str,
+    ctx: AgentContext,
     *,
-    session: Session,
-    conversation_id: str | None = None,
     history: Sequence[BaseMessage] = (),
     agent: CompiledStateGraph | None = None,
-    search: Callable[[str], list[SourceChunk]] = retrieve_chunks,
-    now: datetime | None = None,
 ) -> ChatAnswer:
-    """Run one turn. Writes (a ticket) go through `session`; the caller commits or rolls back."""
-    message = validate_user_message(message)
-    ctx = AgentContext(session=session, conversation_id=conversation_id, now=now or datetime.now(UTC), search=search)
+    """Run one turn with a caller-built context. Writes go through ctx.session; the caller commits or rolls back.
 
+    After it returns, ctx holds what the tools did (ticket_id, failed_lookups, ...).
+    """
+    message = validate_user_message(message)
     inputs = [*history, HumanMessage(message)]
     result = (agent or get_agent()).invoke(
         {"messages": inputs}, context=ctx, config={"recursion_limit": RECURSION_LIMIT}
@@ -101,6 +99,21 @@ def run_agent(
     # Only cite passages the search tool actually returned this turn.
     sources = [s for s in dict.fromkeys(parsed.sources) if s in ctx.retrieved]
     return ChatAnswer(answer=parsed.answer, sources=sources, **escalation)
+
+
+def run_agent(
+    message: str,
+    *,
+    session: Session,
+    conversation_id: str | None = None,
+    history: Sequence[BaseMessage] = (),
+    agent: CompiledStateGraph | None = None,
+    search: Callable[[str], list[SourceChunk]] = retrieve_chunks,
+    now: datetime | None = None,
+) -> ChatAnswer:
+    """Run one stateless turn (no conversation bookkeeping). See ChatService for the full flow."""
+    ctx = AgentContext(session=session, conversation_id=conversation_id, now=now or datetime.now(UTC), search=search)
+    return run_turn(message, ctx, history=history, agent=agent)
 
 
 def main() -> None:

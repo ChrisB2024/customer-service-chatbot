@@ -24,6 +24,7 @@ from chatbot.schemas import OrderItemView, OrderView, SourceChunk
 
 ORDER_NUMBER = re.compile(r"NG-\d{5}")
 MAX_LOOKUPS_PER_TURN = 3
+MAX_FAILED_LOOKUPS_PER_CONVERSATION = 5
 MAX_SUMMARY_CHARS = 1000
 
 ORDER_NOT_FOUND = (
@@ -33,6 +34,10 @@ ORDER_NOT_FOUND = (
 LOOKUP_LIMIT_REACHED = (
     "Lookup limit reached for this message. Don't try more combinations. "
     "Ask the customer to check their confirmation email, or offer to connect them with a person."
+)
+CONVERSATION_LOOKUP_LIMIT = (
+    "Too many unsuccessful lookups in this conversation. Don't try again. "
+    "Offer to connect the customer with a person who can verify their identity another way."
 )
 BAD_ORDER_NUMBER = "Order numbers look like NG-12345. Ask the customer for the number in their confirmation email."
 
@@ -50,6 +55,8 @@ class AgentContext:
     retrieved: set[str] = field(default_factory=set)  # refs of every passage shown to the model
     verified_orders: set[str] = field(default_factory=set)
     lookup_attempts: int = 0
+    failed_lookups: int = 0  # this turn; ChatService adds it to the conversation's total
+    failed_lookup_budget: int = MAX_FAILED_LOOKUPS_PER_CONVERSATION  # what's left for this conversation
     ticket_id: str | None = None
     lock: threading.Lock = field(default_factory=threading.Lock)
 
@@ -105,6 +112,8 @@ def lookup_order(order_number: str, email: str, runtime: ToolRuntime[AgentContex
     """
     ctx = runtime.context
     with ctx.lock:
+        if ctx.failed_lookups >= ctx.failed_lookup_budget:
+            return CONVERSATION_LOOKUP_LIMIT
         ctx.lookup_attempts += 1
         if ctx.lookup_attempts > MAX_LOOKUPS_PER_TURN:
             return LOOKUP_LIMIT_REACHED
@@ -115,6 +124,7 @@ def lookup_order(order_number: str, email: str, runtime: ToolRuntime[AgentContex
 
         order = find_order_for_customer(ctx.session, number, email)
         if order is None:
+            ctx.failed_lookups += 1
             return ORDER_NOT_FOUND
 
         ctx.verified_orders.add(order.order_number)
