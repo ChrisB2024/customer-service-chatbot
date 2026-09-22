@@ -1,7 +1,7 @@
 [project]
 name = "chatbot"
 version = "0.1.0"
-description = "Add your description here"
+description = "RAG customer-support chatbot for a fictional store (Nimbus Gear)"
 readme = "README.md"
 authors = [
     { name = "Chris Bouda", email = "christopherbouda936@gmail.com" }

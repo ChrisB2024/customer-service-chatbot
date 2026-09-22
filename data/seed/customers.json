@@ -1,0 +1,8 @@
+[
+  {"id": "CUST-1001", "first_name": "Maya",   "last_name": "Okafor",    "email": "maya.okafor@example.com",   "phone": "+1-512-555-0101", "city": "Austin",   "region": "TX", "country": "US", "has_account": true,  "created_at": "2025-11-03T10:15:00Z"},
+  {"id": "CUST-1002", "first_name": "Daniel", "last_name": "Reyes",     "email": "daniel.reyes@example.com",  "phone": "+1-303-555-0102", "city": "Denver",   "region": "CO", "country": "US", "has_account": true,  "created_at": "2026-01-20T18:40:00Z"},
+  {"id": "CUST-1003", "first_name": "Priya",  "last_name": "Nair",      "email": "priya.nair@example.com",    "phone": "+1-206-555-0103", "city": "Seattle",  "region": "WA", "country": "US", "has_account": true,  "created_at": "2026-02-14T09:05:00Z"},
+  {"id": "CUST-1004", "first_name": "Tom",    "last_name": "Becker",    "email": "tom.becker@example.com",    "phone": "+1-614-555-0104", "city": "Columbus", "region": "OH", "country": "US", "has_account": true,  "created_at": "2025-03-02T21:55:00Z"},
+  {"id": "CUST-1005", "first_name": "Aiko",   "last_name": "Tanaka",    "email": "aiko.tanaka@example.com",   "phone": "+1-416-555-0105", "city": "Toronto",  "region": "ON", "country": "CA", "has_account": true,  "created_at": "2026-09-11T14:40:00Z"},
+  {"id": "CUST-1006", "first_name": "Sam",    "last_name": "Whitfield", "email": "sam.whitfield@example.com", "phone": "+1-503-555-0106", "city": "Portland", "region": "OR", "country": "US", "has_account": false, "created_at": "2024-07-15T16:50:00Z"}
+]

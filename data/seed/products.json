@@ -1,0 +1,14 @@
+[
+  {"sku": "NG-PODS-PRO",  "name": "Nimbus Pods Pro",                        "brand": "Nimbus",       "category": "audio",       "price": "149.00", "final_sale": false},
+  {"sku": "NG-PODS-LITE", "name": "Nimbus Pods Lite",                       "brand": "Nimbus",       "category": "audio",       "price": "69.00",  "final_sale": false},
+  {"sku": "NG-AURA-65",   "name": "AuraCharge 65W GaN Charger",             "brand": "Nimbus",       "category": "charging",    "price": "49.00",  "final_sale": false},
+  {"sku": "NG-PC-20K",    "name": "PowerCell 20K Power Bank",               "brand": "Nimbus",       "category": "charging",    "price": "59.00",  "final_sale": false},
+  {"sku": "NG-HUB-7",     "name": "Nimbus Hub 7-in-1 USB-C Hub",            "brand": "Nimbus",       "category": "accessories", "price": "79.00",  "final_sale": false},
+  {"sku": "NG-CBL-C2M",   "name": "Braided USB-C Cable (2 m, 240W)",        "brand": "Nimbus",       "category": "cables",      "price": "19.00",  "final_sale": false},
+  {"sku": "NG-TAG-1",     "name": "TrackTag Bluetooth Tracker",             "brand": "Nimbus",       "category": "trackers",    "price": "29.00",  "final_sale": false},
+  {"sku": "NG-TAG-4",     "name": "TrackTag Bluetooth Tracker (4-pack)",    "brand": "Nimbus",       "category": "trackers",    "price": "99.00",  "final_sale": false},
+  {"sku": "NG-GIFT-50",   "name": "Nimbus Gear Gift Card ($50)",            "brand": "Nimbus",       "category": "gift_cards",  "price": "50.00",  "final_sale": true},
+  {"sku": "NG-CASE-CLR",  "name": "Pods Pro Silicone Case (Clearance)",     "brand": "Nimbus",       "category": "accessories", "price": "9.00",   "final_sale": true},
+  {"sku": "KS-STUDIO-X",  "name": "Kestrel Studio X Over-Ear Headphones",   "brand": "Kestrel Audio","category": "audio",       "price": "299.00", "final_sale": false},
+  {"sku": "HL-DOCK-TB",   "name": "Halden Thunderbolt 4 Dock",              "brand": "Halden",       "category": "accessories", "price": "229.00", "final_sale": false}
+]
