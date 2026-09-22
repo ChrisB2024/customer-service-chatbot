@@ -26,5 +26,6 @@ storage/               generated: app.db, chroma/, models/ (gitignored)
 
 ```bash
 uv run python -m chatbot.db.seed   # validate seed JSON, reset + load storage/app.db
+uv run python -m chatbot.rag.ingest  # chunk + embed help-center docs into storage/chroma (idempotent)
 uv run pytest
 ```

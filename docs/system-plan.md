@@ -170,7 +170,7 @@ These must be unreachable: `shipped → cancelled`, `processing → delivered`, 
 
 1. ✅ Scaffold: uv project, deps, config, synthetic data, this plan
 2. ✅ DB layer: SQLAlchemy models, session factory, seed script with Pydantic validation
-3. Ingestion: fastembed adapter, markdown header splitting, idempotent upsert into Chroma
+3. ✅ Ingestion: fastembed adapter, markdown header splitting, idempotent upsert into Chroma
 4. RAG chain: retriever, grounded prompt, `ChatAnthropic`, `ChatAnswer`
 5. Agent + tools: `search_help_center`, `lookup_order`, `escalate_to_human`
 6. Conversation memory: persist and reload history per session
@@ -193,5 +193,6 @@ These must be unreachable: `shipped → cancelled`, `processing → delivered`, 
 
 - Model cost: `claude-opus-5` is the default. Switch `LLM_MODEL` to `claude-haiku-4-5` if cost matters more than quality for this demo.
 - Should the CLI stream tokens, or print the full `ChatAnswer`? (Structured output favors printing the full answer.)
-- Chunking: header-based splitting vs. fixed size. We start header-based and let the eval decide.
+- Chunking: header-based splitting (H1/H2), with size-based splitting as a fallback for long sections. Each chunk is prefixed with `Title > Section`. The current KB gives 48 chunks (144–757 chars), with no section long enough to need the size fallback.
+  - **Retrieval baseline (step 3, k=4):** the right file ranks first for 14/15 golden questions and appears in the top 4 for 15/15. Near-miss sections ranked first: AuraCharge warranty → *Third-party brands*, price match → *Returns > Exchanges*. The step 8 eval should score at the section level, not just the file.
 - A FastAPI endpoint after the CLI works?

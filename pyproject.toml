@@ -35,6 +35,11 @@ dev = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = ["slow: uses the real embedding model (downloaded on first run)"]
+filterwarnings = [
+    # chromadb warns about langchain-chroma's collection config; not actionable here
+    "ignore:legacy embedding function config:DeprecationWarning",
+]
 
 [tool.ruff]
 line-length = 120
